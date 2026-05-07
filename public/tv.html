@@ -63,8 +63,17 @@
     color: #A5D6A7; text-shadow: 0 0 24px rgba(165,214,167,0.4);
   }
   .code-url { font-size: 0.9rem; opacity: 0.5; margin-top: 6px; word-break: break-all; }
-  .qr-area { margin-top: 10px; }
+  .qr-area { margin-top: 10px; display: flex; align-items: center; justify-content: center; }
   .qr-area img { border-radius: 12px; background: #fff; padding: 8px; }
+  .qr-skeleton {
+    width: 216px; height: 216px; border-radius: 12px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; opacity: 0.4;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
   .players-area {
     background: rgba(0,0,0,0.2);
@@ -547,10 +556,14 @@
   // ====== LOBBY ======
   socket.emit('create-room');
 
-  socket.on('room-created', ({ code, qrDataUrl, joinUrl }) => {
+  socket.on('room-created', ({ code, joinUrl }) => {
     $('room-code').textContent = code;
     $('join-url').textContent = joinUrl;
-    if (qrDataUrl) $('qr-area').innerHTML = '<img src="' + qrDataUrl + '" alt="QR Code" width="200" height="200">';
+    $('qr-area').innerHTML = '<div class="qr-skeleton">Generating QR...</div>';
+  });
+
+  socket.on('qr-ready', ({ qrDataUrl }) => {
+    $('qr-area').innerHTML = '<img src="' + qrDataUrl + '" alt="QR Code" width="200" height="200">';
   });
 
   socket.on('player-joined', ({ players }) => {

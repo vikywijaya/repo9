@@ -657,10 +657,10 @@ io.on('connection', (socket) => {
 
   socket.on('create-room', async () => {
     const code = generateRoomCode();
-    const ip = getLocalIP();
-    const joinUrl = `http://${ip}:${PORT}/phone.html?room=${code}`;
-    let qrDataUrl = '';
-    try { qrDataUrl = await QRCode.toDataURL(joinUrl, { width: 280, margin: 1, color: { dark: '#2E4F1F', light: '#FFFFFF' } }); } catch (e) {}
+    const base = process.env.FLY_APP_NAME
+      ? `https://${process.env.FLY_APP_NAME}.fly.dev`
+      : `http://${getLocalIP()}:${PORT}`;
+    const joinUrl = `${base}/phone.html?room=${code}`;
 
     const game = {
       code, tvSocketId: socket.id,
@@ -671,7 +671,15 @@ io.on('connection', (socket) => {
     rooms.set(code, game);
     socket.join(code);
     socket.roomCode = code;
-    socket.emit('room-created', { code, qrDataUrl, joinUrl });
+
+    // Send room info immediately so code shows right away
+    socket.emit('room-created', { code, qrDataUrl: null, joinUrl });
+
+    // Generate QR in background and send when ready
+    try {
+      const qrDataUrl = await QRCode.toDataURL(joinUrl, { width: 280, margin: 1, color: { dark: '#2E4F1F', light: '#FFFFFF' } });
+      socket.emit('qr-ready', { qrDataUrl });
+    } catch (e) {}
   });
 
   socket.on('join-room', ({ code, name }) => {
