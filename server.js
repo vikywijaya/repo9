@@ -601,6 +601,56 @@ function endGame(game) {
   }
 }
 
+// ======================== BOT AUTO-PLAY ========================
+
+function scheduleBotActions(game) {
+  const bots = Array.from(game.players.values()).filter(p => p.isBot);
+  if (!bots.length) return;
+
+  bots.forEach(bot => {
+    function doNextAction() {
+      if (game.state !== 'playing') return;
+      if (bot.problemIdx >= bot.problems.length) return;
+      const prob = bot.problems[bot.problemIdx];
+      let level;
+      if (prob.type === 'coin') {
+        level = 1;
+      } else if (prob.type === 'distractor') {
+        // Bots skip distractors 70% of the time
+        level = Math.random() < 0.7 ? 0 : randInt(1, 3);
+      } else {
+        // Bots pick correct answer 60% of the time, off-by-one 30%, wrong 10%
+        const r = Math.random();
+        if (r < 0.6) level = prob.level;
+        else if (r < 0.9) level = Math.max(1, Math.min(3, prob.level + (Math.random() < 0.5 ? 1 : -1)));
+        else level = randInt(1, 3);
+      }
+      const result = processAction(game, bot.id, level);
+      if (result) {
+        io.to(game.tvSocketId).emit('garden-update', {
+          garden: serializeGarden(game.garden),
+          health: game.health, score: game.score,
+          assignments: getAssignments(game),
+          leaderboard: getLeaderboard(game),
+          action: {
+            playerName: bot.name,
+            roleIcon: ROLE_INFO[bot.role].icon,
+            result: result.result,
+            plotRow: prob.plotRow,
+            plotCol: prob.plotCol
+          }
+        });
+      }
+      const delay = 1200 + Math.random() * 1200;
+      if (bot.problemIdx < bot.problems.length && game.state === 'playing') {
+        setTimeout(doNextAction, delay);
+      }
+    }
+    // Stagger bot start times so they don't all fire at once
+    setTimeout(doNextAction, 1000 + Math.random() * 2000);
+  });
+}
+
 // ======================== SOCKET HANDLERS ========================
 
 io.on('connection', (socket) => {
@@ -608,7 +658,7 @@ io.on('connection', (socket) => {
   socket.on('create-room', async () => {
     const code = generateRoomCode();
     const ip = getLocalIP();
-    const joinUrl = `https://repo9-production.up.railway.app/phone.html?room=${code}`;
+    const joinUrl = `http://${ip}:${PORT}/phone.html?room=${code}`;
     let qrDataUrl = '';
     try { qrDataUrl = await QRCode.toDataURL(joinUrl, { width: 280, margin: 1, color: { dark: '#2E4F1F', light: '#FFFFFF' } }); } catch (e) {}
 
@@ -649,6 +699,24 @@ io.on('connection', (socket) => {
     io.to(game.tvSocketId).emit('player-joined', { players: getPlayerList(game) });
   });
 
+  socket.on('add-bots', ({ count }) => {
+    const game = rooms.get(socket.roomCode);
+    if (!game || game.tvSocketId !== socket.id || game.state !== 'lobby') return;
+    const n = Math.min(count || 4, 4);
+    const botNames = ['Alice 🤖', 'Bob 🤖', 'Carol 🤖', 'Dave 🤖'];
+    for (let i = 0; i < n && game.players.size < 15; i++) {
+      const botId = 'bot-' + game.code + '-' + i;
+      if (game.players.has(botId)) continue;
+      const roleIdx = game.players.size % ROLES.length;
+      const role = ROLES[roleIdx];
+      game.players.set(botId, {
+        id: botId, name: botNames[i], role, score: 0, coins: 0, perfect: 0,
+        problems: [], problemIdx: 0, isBot: true
+      });
+    }
+    io.to(game.tvSocketId).emit('player-joined', { players: getPlayerList(game) });
+  });
+
   socket.on('start-game', () => {
     const game = rooms.get(socket.roomCode);
     if (!game || game.tvSocketId !== socket.id || game.state !== 'lobby') return;
@@ -657,7 +725,10 @@ io.on('connection', (socket) => {
     game.state = 'playing';
     game.garden = createGarden();
     io.to(game.code).emit('game-starting', { players: getPlayerList(game), totalRounds: TOTAL_ROUNDS });
-    setTimeout(() => startRound(game), 3000);
+    setTimeout(() => {
+      startRound(game);
+      scheduleBotActions(game);
+    }, 3000);
   });
 
   // Player picks an action level (1, 2, or 3)
@@ -682,6 +753,7 @@ io.on('connection', (socket) => {
       garden: serializeGarden(game.garden),
       health: game.health, score: game.score,
       assignments: getAssignments(game),
+      leaderboard: getLeaderboard(game),
       action: {
         playerName: player.name, roleIcon: ROLE_INFO[player.role].icon,
         result: result.result, plotRow: result.correctLevel !== undefined ? player.problems[player.problemIdx - 1].plotRow : 0,
@@ -696,6 +768,29 @@ io.on('connection', (socket) => {
   socket.on('get-time', () => {
     const game = rooms.get(socket.roomCode);
     if (game) socket.emit('time-sync', { timeLeft: game.roundTimeLeft });
+  });
+
+  socket.on('reset-game', () => {
+    const game = rooms.get(socket.roomCode);
+    if (!game || game.tvSocketId !== socket.id) return;
+    if (game.roundTimer) { clearInterval(game.roundTimer); game.roundTimer = null; }
+    game.state = 'lobby';
+    game.round = 0;
+    game.garden = null;
+    game.health = 100;
+    game.score = 0;
+    game.coins = 0;
+    game.roundTimeLeft = 0;
+    // Reset player scores but keep them in the room
+    for (const [, player] of game.players) {
+      player.score = 0; player.coins = 0; player.perfect = 0;
+      player.problems = []; player.problemIdx = 0;
+    }
+    io.to(game.tvSocketId).emit('game-reset', { players: getPlayerList(game) });
+    // Notify phone players to go back to waiting screen
+    for (const [sid, player] of game.players) {
+      if (!player.isBot) io.to(sid).emit('game-reset', {});
+    }
   });
 
   socket.on('disconnect', () => {

@@ -113,57 +113,86 @@
   @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
   .plot-label-big { font-size: 1.3rem; font-weight: 800; opacity: 0.7; }
 
-  /* Clue */
+  /* Clue — looks like a speech bubble / question card */
   .clue-box {
-    background: rgba(255,255,255,0.08);
-    border: 3px solid rgba(255,255,255,0.12);
-    border-radius: 18px; padding: 18px 24px;
+    background: #fff;
+    border-radius: 20px; padding: 18px 24px;
     text-align: center; max-width: 360px; width: 100%;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
-  .clue-text { font-size: 1.5rem; font-weight: 700; line-height: 1.4; }
+  .clue-box::after {
+    content: ''; position: absolute; bottom: -14px; left: 50%;
+    transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: #fff;
+  }
+  .clue-label {
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--role);
+    margin-bottom: 6px;
+  }
+  .clue-text { font-size: 1.5rem; font-weight: 800; line-height: 1.4; color: #1a1a1a; }
   .clue-hint { font-size: 2rem; margin-top: 8px; display: block; }
 
-  .progress-text { font-size: 1.1rem; opacity: 0.4; }
+  .progress-text { font-size: 1rem; opacity: 0.35; letter-spacing: 0.5px; }
+
+  /* Section divider between clue and buttons */
+  .action-label {
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; opacity: 0.4; margin-top: 6px;
+  }
 
   /* 3 big action buttons */
   .action-row {
-    display: flex; gap: 12px; width: 100%; max-width: 400px;
+    display: flex; gap: 10px; width: 100%; max-width: 400px;
   }
   .action-btn {
     flex: 1;
-    background: rgba(255,255,255,0.08);
-    border: 4px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
-    padding: 20px 8px;
+    background: color-mix(in srgb, var(--role) 80%, #000 20%);
+    border: 3px solid color-mix(in srgb, var(--role) 60%, #000 40%);
+    border-radius: 18px;
+    padding: 18px 6px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 8px;
-    cursor: pointer; transition: all 0.15s;
+    gap: 6px;
+    cursor: pointer; transition: transform 0.12s, filter 0.12s;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
-    min-height: 120px;
+    min-height: 110px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
   }
-  .action-btn:active { transform: scale(0.93); }
-  .action-btn .btn-icon { font-size: 1.8rem; pointer-events: none; }
-  .action-btn .btn-label { font-size: 1rem; font-weight: 700; opacity: 0.7; pointer-events: none; }
-  .action-btn:hover { border-color: var(--role); background: rgba(255,255,255,0.12); }
+  .action-btn:active { transform: scale(0.92); filter: brightness(0.85); }
+  .action-btn .btn-icon {
+    font-size: 1.6rem; pointer-events: none;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%; width: 52px; height: 52px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .action-btn .btn-label {
+    font-size: 0.85rem; font-weight: 800; color: #fff;
+    opacity: 0.95; pointer-events: none; letter-spacing: 0.3px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
 
-  .action-btn.pop { animation: pop 0.4s ease; border-color: #66BB6A; background: rgba(102,187,106,0.15); }
-  .action-btn.shake { animation: shake 0.35s ease; border-color: #EF5350; background: rgba(239,83,80,0.1); }
-  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  .action-btn.pop  { animation: pop  0.4s ease; filter: brightness(1.2); }
+  .action-btn.shake { animation: shake 0.35s ease; filter: brightness(0.7); }
+  @keyframes pop   { 0% { transform: scale(1); } 40% { transform: scale(1.1); } 100% { transform: scale(1); } }
   @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 
-  /* Skip button (for distractors) */
+  /* Skip button */
   .skip-btn {
-    width: 100%; max-width: 400px; padding: 14px;
-    background: rgba(255,255,255,0.06);
-    border: 3px dashed rgba(255,255,255,0.2);
+    width: 100%; max-width: 400px; padding: 13px;
+    background: transparent;
+    border: 2px dashed rgba(255,255,255,0.25);
     border-radius: 14px;
-    color: rgba(255,255,255,0.5); font-size: 1.1rem; font-weight: 700;
+    color: rgba(255,255,255,0.45); font-size: 1rem; font-weight: 700;
     cursor: pointer; text-align: center;
     -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.3px;
   }
-  .skip-btn:active { transform: scale(0.97); background: rgba(255,255,255,0.1); }
+  .skip-btn:active { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
 
   /* Gold coin screen */
   .coin-display {
@@ -197,18 +226,27 @@
   /* Coins counter in header */
   .coin-count { display: flex; align-items: center; gap: 4px; font-weight: 800; color: #FFD54F; }
 
-  /* ====== RESULT OVERLAY ====== */
-  .result-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85); z-index: 100;
-    align-items: center; justify-content: center;
-    flex-direction: column; gap: 14px;
+  /* ====== RESULT BANNER (top, non-blocking) ====== */
+  .result-banner {
+    display: none; position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100; padding: 10px 16px;
+    align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: nowrap;
+    border-bottom: 3px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    animation: slide-down 0.25s ease;
   }
-  .result-overlay.active { display: flex; }
-  .result-emoji { font-size: 5rem; }
-  .result-msg { font-size: 2rem; font-weight: 900; text-align: center; }
-  .result-detail { font-size: 1.3rem; opacity: 0.7; text-align: center; }
-  .result-points { font-size: 1.6rem; font-weight: 800; color: #FFD54F; }
+  @keyframes slide-down { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .result-banner.active { display: flex; }
+  .result-banner.ok  { background: rgba(27,94,32,0.95); }
+  .result-banner.bad { background: rgba(183,28,28,0.95); }
+  .result-banner.meh { background: rgba(230,81,0,0.95); }
+  .result-banner.coin { background: rgba(120,80,0,0.95); }
+  .rb-left { display: flex; align-items: center; gap: 8px; }
+  .rb-emoji { font-size: 1.8rem; line-height: 1; }
+  .rb-msg { font-size: 1.2rem; font-weight: 900; }
+  .rb-detail { font-size: 0.95rem; opacity: 0.75; }
+  .rb-pts { font-size: 1.1rem; font-weight: 800; color: #FFD54F; white-space: nowrap; }
 
   /* ====== ALL DONE ====== */
   .alldone {
@@ -265,21 +303,6 @@
     font-size: 1.4rem; font-weight: 800; cursor: pointer;
   }
 
-  /* Leaderboard popup on phone */
-  .lb-popup {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.88); z-index: 150;
-    align-items: center; justify-content: center;
-    flex-direction: column; padding: 24px;
-  }
-  .lb-popup.show { display: flex; }
-  .lb-popup h3 { font-size: 1.6rem; font-weight: 900; margin-bottom: 12px; }
-  .lb-popup .lb-rows { width: 100%; max-width: 360px; font-size: 1.15rem; line-height: 2.2; }
-  .lb-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
-  .lb-row.me { background: rgba(255,255,255,0.1); border-radius: 8px; padding: 4px 8px; font-weight: 800; }
-  .lb-row .lb-rank { width: 32px; text-align: center; }
-  .lb-row .lb-name { flex: 1; }
-  .lb-row .lb-pts { font-weight: 800; }
 
   /* Encouraging message */
   .encourage {
@@ -366,20 +389,26 @@
         <span class="plant" id="t-plant-emoji"></span>
       </div>
       <div class="clue-box">
+        <div class="clue-label">Your clue</div>
         <div class="clue-text" id="t-clue"></div>
         <span class="clue-hint" id="t-hint"></span>
       </div>
       <div class="progress-text" id="t-progress">Task 1 of 3</div>
+      <div class="action-label">How much?</div>
       <div class="action-row" id="t-buttons"></div>
     </div>
   </div>
 
-  <!-- RESULT OVERLAY -->
-  <div class="result-overlay" id="result-overlay">
-    <div class="result-emoji" id="r-emoji"></div>
-    <div class="result-msg" id="r-msg"></div>
-    <div class="result-detail" id="r-detail"></div>
-    <div class="result-points" id="r-points"></div>
+  <!-- RESULT BANNER (top strip) -->
+  <div class="result-banner" id="result-banner">
+    <div class="rb-left">
+      <span class="rb-emoji" id="r-emoji"></span>
+      <div>
+        <div class="rb-msg" id="r-msg"></div>
+        <div class="rb-detail" id="r-detail"></div>
+      </div>
+    </div>
+    <span class="rb-pts" id="r-points"></span>
   </div>
 
   <!-- ALL DONE -->
@@ -390,12 +419,6 @@
     <div class="note">Watch the TV!<br>Waiting for round to end...</div>
   </div>
 
-  <!-- LEADERBOARD POPUP (during game) -->
-  <div class="lb-popup" id="lb-popup">
-    <h3>&#x1F3C6; Leaderboard</h3>
-    <div class="lb-rows" id="lb-rows"></div>
-  </div>
-
   <!-- GAME OVER -->
   <div class="screen endscreen" id="scr-over">
     <div class="smiley" style="font-size:6rem;">&#x1F60A;</div>
@@ -404,10 +427,7 @@
     <div class="e-rating" id="go-rating"></div>
     <div class="encourage" id="go-encourage"></div>
     <div class="e-body" id="go-body"></div>
-    <div class="cel-board-phone" id="go-lb-box">
-      <h4>&#x1F3C6; Final Leaderboard</h4>
-      <div id="go-lb"></div>
-    </div>
+    <div class="e-msg">Check the TV for the final leaderboard! 📺</div>
     <button class="btn-again" onclick="location.reload()">Play Again</button>
   </div>
 
@@ -485,9 +505,21 @@
   });
 
   // ====== PROBLEM (new task arrives) ======
+  let bannerTimer = null;
+  function showBanner(emoji, msg, detail, pts, type) {
+    const b = $('result-banner');
+    b.className = 'result-banner active ' + (type || 'ok');
+    $('r-emoji').textContent = emoji;
+    $('r-msg').textContent = msg;
+    $('r-detail').textContent = detail;
+    $('r-points').textContent = pts;
+    if (bannerTimer) clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => b.classList.remove('active'), 1800);
+  }
+
   socket.on('problem', data => {
     canAct = true;
-    $('result-overlay').classList.remove('active');
+    $('result-banner').classList.remove('active');
 
     $('t-icon').textContent = { water:'\u{1F4A7}', sun:'\u{2600}\u{FE0F}', seed:'\u{1F331}', animal:'\u{1F6E1}\u{FE0F}' }[myRole] || '';
     $('t-role').textContent = myRoleName;
@@ -503,6 +535,7 @@
 
     const body = document.querySelector('.task-body');
 
+    const actionLabel = document.querySelector('.action-label');
     if (data.problemType === 'coin') {
       // ===== GOLD COIN TASK =====
       sfxTap();
@@ -512,6 +545,7 @@
       $('t-hint').textContent = '\u{1FA99}';
       $('t-hint').style.display = 'block';
       $('t-plot').style.display = 'none';
+      if (actionLabel) actionLabel.style.display = 'none';
 
       // Show coin in button area
       const row = $('t-buttons');
@@ -536,6 +570,7 @@
     } else {
       // ===== REAL or DISTRACTOR TASK =====
       sfxTap();
+      if (actionLabel) actionLabel.style.display = '';
       $('t-plot').style.display = 'flex';
       $('t-plot-label').textContent = 'Plot ' + data.plotLabel;
       $('t-plant-emoji').textContent = data.plotEmoji || '\u{1F7EB}';
@@ -557,7 +592,7 @@
       for (let i = 0; i < 3; i++) {
         const btn = document.createElement('div');
         btn.className = 'action-btn';
-        btn.innerHTML = '<span class="btn-icon">' + (data.buttons ? data.buttons[i] : myButtons[i]) + '</span>' +
+        btn.innerHTML = '<div class="btn-icon">' + (data.buttons ? data.buttons[i] : myButtons[i]) + '</div>' +
           '<span class="btn-label">' + (data.labels ? data.labels[i] : myLabels[i]) + '</span>';
         const level = i + 1;
         btn.addEventListener('click', () => pickAction(level, btn));
@@ -600,48 +635,25 @@
 
   // ====== ACTION RESULT ======
   socket.on('action-result', data => {
-    const ov = $('result-overlay');
-
     if (data.result === 'coin') {
       sfxCoin();
-      $('r-emoji').textContent = '\u{1FA99}';
-      $('r-msg').textContent = data.msg;
-      $('r-detail').textContent = '';
-      $('r-points').textContent = '+' + data.points + ' points';
+      showBanner('\u{1FA99}', data.msg, '', '+' + data.points + ' pts', 'coin');
     } else if (data.result === 'skipped') {
       sfxSkip();
-      $('r-emoji').textContent = '\u{1F9E0}';
-      $('r-msg').textContent = data.msg;
-      $('r-detail').textContent = 'That plot was fine!';
-      $('r-points').textContent = '+' + data.points + ' points';
+      showBanner('\u{1F9E0}', data.msg, 'That plot was fine!', '+' + data.points + ' pts', 'ok');
     } else if (data.result === 'tricked') {
       sfxTricked();
-      $('r-emoji').textContent = '\u{1F648}';
-      $('r-msg').textContent = data.msg;
-      $('r-detail').textContent = 'That plot was fine!';
-      $('r-points').textContent = '0 points';
+      showBanner('\u{1F648}', data.msg, 'That plot was fine!', '0 pts', 'bad');
     } else if (data.result === 'perfect') {
       sfxPerfect();
-      $('r-emoji').textContent = '\u{2728}';
-      $('r-msg').textContent = data.msg;
-      $('r-detail').textContent = '';
-      $('r-points').textContent = '+' + data.points;
+      showBanner('\u{2728}', data.msg, '', '+' + data.points + ' pts', 'ok');
     } else if (data.result === 'close') {
       sfxClose();
-      $('r-emoji').textContent = '\u{1F44D}';
-      $('r-msg').textContent = data.msg;
-      $('r-detail').textContent = 'Needed: ' + (myButtons[(data.correctLevel||1)-1] || '');
-      $('r-points').textContent = '+' + data.points;
+      showBanner('\u{1F44D}', data.msg, 'Needed: ' + (myButtons[(data.correctLevel||1)-1] || ''), '+' + data.points + ' pts', 'meh');
     } else {
       sfxWrong();
-      $('r-emoji').textContent = '\u{1F914}';
-      $('r-msg').textContent = data.msg;
-      $('r-detail').textContent = data.correctLevel > 0 ? 'Answer: ' + (myButtons[(data.correctLevel||1)-1] || '') : '';
-      $('r-points').textContent = '0';
+      showBanner('\u{1F914}', data.msg, data.correctLevel > 0 ? 'Answer: ' + (myButtons[(data.correctLevel||1)-1] || '') : '', '0 pts', 'bad');
     }
-
-    ov.classList.add('active');
-    // Result overlay stays briefly until next problem arrives (server sends after 0.8s)
   });
 
   // ====== ALL DONE ======
@@ -656,35 +668,12 @@
     show('scr-done');
   });
 
-  // ====== LEADERBOARD (every 20s) ======
-  socket.on('leaderboard', data => {
-    renderPhoneLB(data.board);
-    $('lb-popup').classList.add('show');
-    setTimeout(() => $('lb-popup').classList.remove('show'), 3500);
-  });
-
-  function renderPhoneLB(board) {
-    const el = $('lb-rows');
-    const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
-    el.innerHTML = board.map((p, i) => {
-      const isMe = p.name === ($('w-name').textContent || '').replace('Hello, ', '').replace('!', '');
-      return '<div class="lb-row' + (isMe ? ' me' : '') + '">' +
-        '<span class="lb-rank">' + (i < 3 ? medals[i] : '#'+(i+1)) + '</span>' +
-        '<span style="color:' + p.roleColor + '">' + p.roleIcon + '</span>' +
-        '<span class="lb-name">' + esc(p.name) + '</span>' +
-        '<span class="lb-pts">' + p.score + '</span>' +
-        '</div>';
-    }).join('');
-  }
-
   // ====== GAME OVER → CELEBRATION ======
   socket.on('game-over', data => {
     stopTimer(); sfxWin();
-    $('result-overlay').classList.remove('active');
-    $('lb-popup').classList.remove('show');
+    $('result-banner').classList.remove('active');
 
     const myRank = data.myRank || '?';
-    $('go-icon').textContent = '\u{1F389}';
     $('go-head').textContent = 'You are awesome!';
     $('go-stars').textContent = '\u{2B50}'.repeat(data.rating.stars);
     $('go-rating').textContent = data.rating.name;
@@ -693,27 +682,18 @@
       'Your rank: <strong>#' + myRank + '</strong><br>' +
       'Your score: <strong>' + (data.myScore || 0) + '</strong><br>' +
       '\u{2728} Perfect: <strong>' + (data.myPerfect || 0) + '</strong> &nbsp; \u{1FA99} Coins: <strong>' + (data.myCoins || 0) + '</strong>';
-    if (data.leaderboard) renderPhoneCelLB($('go-lb'), data.leaderboard);
     sfxWin();
     show('scr-over');
   });
 
-  function renderPhoneCelLB(el, board) {
-    if (!board || !board.length) { el.innerHTML = ''; return; }
-    const myName = ($('w-name').textContent || '').replace('Hello, ', '').replace('!', '');
-    const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
-    el.innerHTML = board.map((p, i) => {
-      const isMe = p.name === myName;
-      return '<div class="p-cel-row' + (isMe ? ' me' : '') + '">' +
-        '<span style="width:28px;text-align:center;">' + (i < 3 ? medals[i] : '#'+(i+1)) + '</span>' +
-        '<span style="color:' + p.roleColor + '">' + p.roleIcon + '</span>' +
-        '<span style="flex:1">' + esc(p.name) + (isMe ? ' (you)' : '') + '</span>' +
-        '<span style="font-weight:800">' + p.score + '</span>' +
-        '</div>';
-    }).join('');
-  }
-
   socket.on('game-error', ({message}) => alert(message));
+
+  socket.on('game-reset', () => {
+    stopTimer();
+    $('result-banner').classList.remove('active');
+    document.querySelector('.wait-msg').textContent = 'Waiting for game to start...';
+    show('scr-wait');
+  });
 
   // ====== TIMER ======
   function startTimer(dur) {

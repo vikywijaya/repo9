@@ -269,9 +269,57 @@
   }
 
   /* Players sidebar */
-  .players-mini { font-size: 0.95rem; line-height: 2; }
-  .players-mini .pm-item { display: flex; align-items: center; gap: 6px; }
-  .players-mini .pm-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .players-mini { font-size: 0.9rem; display: flex; flex-direction: column; gap: 6px; }
+  .pm-item { display: flex; align-items: center; gap: 8px; }
+  .pm-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pm-info { display: flex; flex-direction: column; line-height: 1.2; }
+  .pm-name { font-weight: 700; font-size: 0.95rem; }
+  .pm-role { font-size: 0.75rem; opacity: 0.5; }
+
+  /* Floating activity popup - rendered in fixed overlay, never clipped */
+  #popup-layer {
+    position: fixed; inset: 0; pointer-events: none; z-index: 50;
+  }
+  .plot-popup {
+    position: absolute; transform: translateX(-50%);
+    white-space: nowrap; font-size: 0.85rem; font-weight: 800;
+    padding: 4px 10px; border-radius: 20px;
+    pointer-events: none;
+    animation: popup-float 1.6s ease-out forwards;
+  }
+  .plot-popup.good  { background: rgba(46,125,50,0.92); color: #A5D6A7; }
+  .plot-popup.bad   { background: rgba(183,28,28,0.92); color: #EF9A9A; }
+  .plot-popup.coin  { background: rgba(120,80,0,0.92);  color: #FFD54F; }
+  .plot-popup.meh   { background: rgba(120,68,0,0.92);  color: #FFB74D; }
+  @keyframes popup-float {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(0)   scale(0.7); }
+    15%  { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1.05); }
+    70%  { opacity: 1; transform: translateX(-50%) translateY(-36px) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-56px) scale(0.9); }
+  }
+
+  /* Persistent leaderboard panel */
+  .lb-panel {
+    width: 220px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .lb-panel .label {
+    font-size: 0.9rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px;
+    padding: 0 4px; margin-bottom: 2px;
+  }
+  .lb-entry {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 8px 10px;
+    font-size: 0.95rem; transition: background 0.3s;
+  }
+  .lb-entry:first-child  { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.2); }
+  .lb-entry:nth-child(2) { background: rgba(192,192,192,0.08); }
+  .lb-entry:nth-child(3) { background: rgba(205,127,50,0.08); }
+  .lb-rank { width: 22px; text-align: center; font-size: 1rem; }
+  .lb-name { flex: 1; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lb-score { font-weight: 900; color: #FFD54F; font-size: 1rem; }
+  .lb-coins { font-size: 0.8rem; opacity: 0.5; margin-left: 2px; }
 
   /* ====== OVERLAYS ====== */
   .overlay {
@@ -405,17 +453,13 @@
         <div class="health-label" id="health-label">100%</div>
       </div>
       <div class="info-card" style="flex:1; overflow:hidden;">
-        <div class="label">Activity</div>
-        <div class="activity-log" id="activity-log"></div>
-      </div>
-      <div class="info-card">
         <div class="label">Team</div>
         <div class="players-mini" id="players-mini"></div>
       </div>
     </div>
 
     <div class="garden-area">
-      <div class="garden-frame">
+      <div class="garden-frame" style="margin-right: 0;">
         <div class="col-labels">
           <span class="grid-label">1</span>
           <span class="grid-label">2</span>
@@ -433,15 +477,14 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- LEADERBOARD OVERLAY (pops up every 20s) -->
-  <div class="overlay" id="lb-overlay">
-    <div class="overlay-card" style="max-width:600px;">
-      <h2>&#x1F3C6; Leaderboard</h2>
-      <div id="lb-list" style="text-align:left; font-size:1.3rem; line-height:2.2;"></div>
+    <!-- PERSISTENT LEADERBOARD -->
+    <div class="lb-panel" id="lb-panel">
+      <div class="label">&#x1F3C6; Leaderboard</div>
+      <div id="lb-entries"></div>
     </div>
   </div>
+
 
   <!-- GAME OVER CELEBRATION -->
   <div class="celebrate" id="gameover-screen">
@@ -454,7 +497,7 @@
       <div id="gameover-lb"></div>
     </div>
     <div class="cel-stats" id="go-stats2"></div>
-    <button class="btn-start" onclick="location.reload()" style="margin-top:12px; font-size:1.8rem; padding:20px 52px; z-index:2;">&#x1F504; Restart Game</button>
+    <button class="btn-start" onclick="restartGame()" style="margin-top:12px; font-size:1.8rem; padding:20px 52px; z-index:2;">&#x1F504; Play Again</button>
   </div>
 
   <!-- STARTING -->
@@ -462,6 +505,7 @@
     <div class="starting-text" id="starting-text">&#x1F331; Get Ready! &#x1F331;</div>
   </div>
 
+<div id="popup-layer"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 (function() {
@@ -528,6 +572,39 @@
 
   window.startGame = () => { $('btn-start').disabled = true; socket.emit('start-game'); };
 
+  window.restartGame = () => { socket.emit('reset-game'); };
+
+  socket.on('game-reset', ({ players }) => {
+    stopTimer();
+    $('gameover-screen').classList.remove('active');
+    playersList = players;
+    $('player-count').textContent = players.length;
+    const list = $('player-list');
+    list.innerHTML = '';
+    players.forEach(p => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="role-dot" style="background:' + p.roleColor + '"></span>' +
+        '<span>' + p.roleIcon + ' ' + esc(p.name) + '</span>' +
+        '<span class="role-label">' + p.roleName + '</span>';
+      list.appendChild(li);
+    });
+    $('waiting-msg').style.display = players.length > 0 ? 'none' : 'block';
+    $('btn-start').disabled = players.length < 1;
+    showScreen('lobby-screen');
+  });
+
+  window.testWithBots = () => {
+    socket.emit('add-bots', { count: 4 });
+    setTimeout(() => { $('btn-start').disabled = false; }, 400);
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'B') {
+      e.preventDefault();
+      testWithBots();
+    }
+  });
+
   socket.on('game-error', ({ message }) => { alert(message); $('btn-start').disabled = playersList.length < 1; });
 
   // ====== GAME STARTING ======
@@ -559,56 +636,49 @@
     $('score-display').textContent = data.score;
     updateHealth(data.health);
     renderGarden(data.garden, assignments);
+    if (data.leaderboard) updateLBPanel(data.leaderboard);
     if (data.action) {
       const a = data.action;
       if (a.result === 'coin') {
         sfxCorrect();
         const cd = $('coins-display');
         if (cd) cd.textContent = (parseInt(cd.textContent)||0) + 1;
-        addLog(a.playerName + ' \u{1FA99} got a coin!', 'good');
+        showPlotPopup(a.plotRow, a.plotCol, '\u{1FA99} Coin! ' + a.playerName, 'coin');
       } else if (a.result === 'skipped') {
         sfxCorrect();
-        addLog(a.playerName + ' \u{1F9E0} smart skip!', 'good');
+        showPlotPopup(a.plotRow, a.plotCol, '\u{1F9E0} Smart skip! ' + a.playerName, 'good');
       } else if (a.result === 'tricked') {
         sfxWrong();
-        addLog(a.playerName + ' got tricked!', 'bad');
-      } else {
-        const label = String.fromCharCode(65 + a.plotRow) + (a.plotCol + 1);
-        if (a.result === 'perfect') {
-          sfxCorrect();
-          addLog(a.playerName + ' ' + a.roleIcon + ' fixed ' + label + '!', 'good');
-          triggerSparkle(a.plotRow, a.plotCol);
-        } else if (a.result === 'close') {
-          sfxCorrect();
-          addLog(a.playerName + ' almost got ' + label, 'good');
-        } else {
-          sfxWrong();
-          addLog(a.playerName + ' tried ' + label, 'bad');
-        }
+        showPlotPopup(a.plotRow, a.plotCol, '\u{1F648} Tricked! ' + a.playerName, 'bad');
+      } else if (a.result === 'perfect') {
+        sfxCorrect();
+        triggerSparkle(a.plotRow, a.plotCol);
+        showPlotPopup(a.plotRow, a.plotCol, '\u{2728} Perfect! ' + a.playerName, 'good');
+      } else if (a.result === 'close') {
+        sfxCorrect();
+        showPlotPopup(a.plotRow, a.plotCol, '\u{1F44D} Close! ' + a.playerName, 'meh');
+      } else if (a.result === 'wrong') {
+        sfxWrong();
+        showPlotPopup(a.plotRow, a.plotCol, '\u{274C} ' + a.playerName, 'bad');
       }
     }
   });
 
-  // ====== LEADERBOARD (every 20 seconds) ======
-  socket.on('leaderboard', (data) => {
-    renderLB($('lb-list'), data.board);
-    $('lb-overlay').classList.add('active');
-    // Auto-hide after 4 seconds
-    setTimeout(() => $('lb-overlay').classList.remove('active'), 4000);
-  });
+  // ====== LEADERBOARD (persistent, updates every 20 seconds) ======
+  socket.on('leaderboard', (data) => { updateLBPanel(data.board); });
 
-  function renderLB(el, board) {
+  function updateLBPanel(board) {
+    const el = $('lb-entries');
     if (!board || !board.length) { el.innerHTML = ''; return; }
     const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
     el.innerHTML = board.map((p, i) => {
-      const medal = i < 3 ? medals[i] : '<span style="opacity:0.4">#' + (i+1) + '</span>';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:4px 0;' +
-        (i === 0 ? 'font-size:1.4em;font-weight:900;' : '') + '">' +
-        '<span>' + medal + '</span>' +
+      const rank = i < 3 ? medals[i] : '<span style="opacity:0.4">#' + (i+1) + '</span>';
+      return '<div class="lb-entry">' +
+        '<span class="lb-rank">' + rank + '</span>' +
         '<span style="color:' + p.roleColor + '">' + p.roleIcon + '</span>' +
-        '<span style="flex:1">' + esc(p.name) + '</span>' +
-        '<span style="font-weight:800">' + p.score + '</span>' +
-        '<span style="opacity:0.5;font-size:0.8em;">\u{1FA99}' + p.coins + '</span>' +
+        '<span class="lb-name">' + esc(p.name) + '</span>' +
+        '<span class="lb-score">' + p.score + '</span>' +
+        '<span class="lb-coins">\u{1FA99}' + p.coins + '</span>' +
         '</div>';
     }).join('');
   }
@@ -616,7 +686,6 @@
   // ====== GAME OVER → CELEBRATION ======
   socket.on('game-over', (data) => {
     stopTimer();
-    $('lb-overlay').classList.remove('active');
     sfxWin();
 
     $('go-title2').textContent = '\u{1F389} You are awesome! \u{1F389}';
@@ -700,9 +769,32 @@
   function renderPlayersMini() {
     const el = $('players-mini'); el.innerHTML = '';
     playersList.forEach(p => {
-      el.innerHTML += '<div class="pm-item"><span class="pm-dot" style="background:' + p.roleColor + '"></span>' + p.roleIcon + ' ' + esc(p.name) + '</div>';
+      el.innerHTML += '<div class="pm-item">' +
+        '<span class="pm-dot" style="background:' + p.roleColor + '"></span>' +
+        '<span style="font-size:1.2rem">' + p.roleIcon + '</span>' +
+        '<div class="pm-info"><span class="pm-name">' + esc(p.name) + '</span>' +
+        '<span class="pm-role">' + esc(p.roleName) + '</span></div>' +
+        '</div>';
     });
   }
+
+  function showPlotPopup(row, col, text, type) {
+    const layer = document.getElementById('popup-layer');
+    const el = document.getElementById('plot-' + row + '-' + col);
+    const anchor = el || layer;
+    const rect = anchor ? anchor.getBoundingClientRect() : null;
+    const pop = document.createElement('div');
+    pop.className = 'plot-popup ' + (type || 'good');
+    pop.textContent = text;
+    if (rect) {
+      pop.style.left = (rect.left + rect.width / 2) + 'px';
+      pop.style.top  = (rect.top  + rect.height * 0.2) + 'px';
+    }
+    layer.appendChild(pop);
+    setTimeout(() => pop.remove(), 1700);
+  }
+
+  function addLog() {} // replaced by plot popups
 
   function updateHealth(h) {
     $('health-fill').style.width = h + '%';
